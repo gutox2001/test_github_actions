@@ -1,4 +1,4 @@
-name: Deploy to App 😎
+name: Firebase Arqs 🔥
 
 on:
     push:
@@ -15,56 +15,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout o repositório
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-    #   # Verificar se a PR foi mergeada
-    #   - name: Check if PR was merged
-    #     id: check_pr
-    #     run: echo "pr_merged=${{ github.event.pull_request.merged }}" >> $GITHUB_ENV
-
-    #   # Condição para continuar se a PR foi mergeada
-    #   - name: Skip if not merged
-    #     if: env.pr_merged != 'true'
-    #     run: echo "PR not merged. Skipping job."
-
-      # Criar firebase.json
-      - name: Create firebase.json
+      - name: Create files
         run: |
-          echo '{
-              "hosting": {
-                  "site": "ufvvirtuallabs-oficial",
-                  "public": "BuildWebGL",
-                  "ignore": [
-                      "firebase.json",
-                      "**/.*",
-                      "**/node_modules/**"
-                  ]
-              }
-          }' > firebase.json
+          echo '{ "hosting": { "site": "ufvvirtuallabs-simulacao", "public": "BuildWebGL", "ignore": ["firebase.json", "**/.*", "**/node_modules/**"] } }' > firebase.json
+          echo '{ "projects": { "default": "ufvvirtuallabs-33a39" } }' > .firebaserc
 
-      # Criar .firebaserc
-      - name: Create .firebaserc
+      - name: Check for changes
+        id: changes
         run: |
-          echo '{
-              "projects": {
-                  "default": "ufvvirtuallabs-33a39"
-              }
-          }' > .firebaserc
+          git add firebase.json .firebaserc
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            echo "changes=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected."
+            echo "changes=true" >> $GITHUB_ENV
 
-      # Configurar usuário git
-      - name: Configure Git
+      - name: Configure git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
-      # Commit dos arquivos
-      - name: Commit files
+      - name: Commit changes
+        if: env.changes == 'true'
         run: |
-          git add firebase.json .firebaserc
-          git commit -m "Added firebase.json and .firebaserc for production deployment"
+          git commit -m "Updated firebase.json and .firebaserc for production deployment"
 
-      # Push das mudanças
       - name: Push changes
+        if: env.changes == 'true'
         run: git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
