@@ -1,0 +1,70 @@
+name: Deploy to App 😎
+
+on:
+    push:
+        branches:
+            - main
+#   pull_request:
+#     branches:
+#       - main
+#     types: [closed]
+
+jobs:
+  firebase-arqs:
+    name: Create firebase.json and .firebaserc - PRODUCTION - 📚
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout o repositório
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+    #   # Verificar se a PR foi mergeada
+    #   - name: Check if PR was merged
+    #     id: check_pr
+    #     run: echo "pr_merged=${{ github.event.pull_request.merged }}" >> $GITHUB_ENV
+
+    #   # Condição para continuar se a PR foi mergeada
+    #   - name: Skip if not merged
+    #     if: env.pr_merged != 'true'
+    #     run: echo "PR not merged. Skipping job."
+
+      # Criar firebase.json
+      - name: Create firebase.json
+        run: |
+          echo '{
+              "hosting": {
+                  "site": "ufvvirtuallabs-oficial",
+                  "public": "BuildWebGL",
+                  "ignore": [
+                      "firebase.json",
+                      "**/.*",
+                      "**/node_modules/**"
+                  ]
+              }
+          }' > firebase.json
+
+      # Criar .firebaserc
+      - name: Create .firebaserc
+        run: |
+          echo '{
+              "projects": {
+                  "default": "ufvvirtuallabs-33a39"
+              }
+          }' > .firebaserc
+
+      # Configurar usuário git
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Commit dos arquivos
+      - name: Commit files
+        run: |
+          git add firebase.json .firebaserc
+          git commit -m "Added firebase.json and .firebaserc for production deployment"
+
+      # Push das mudanças
+      - name: Push changes
+        run: git push origin main
